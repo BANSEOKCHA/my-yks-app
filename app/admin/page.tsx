@@ -106,22 +106,35 @@ export default function AdminPage() {
     }
   };
 
+  // 관리자 삭제: 관리자가 다른 유저의 게시글을 삭제할 때 관리자 권한을 재확인한 후 진행
   const handleDeletePost = async (postId: string, postUserId: string) => {
-    if (confirm("해당 게시글을 삭제하고, 해당 회원의 달란트 점수를 1점 차감하시겠습니까?")) {
-      try {
-        const userRef = doc(db, "users", postUserId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data() as UserData;
-          const currentScore = userData.talentScore || 0;
-          const newScore = currentScore > 0 ? currentScore - 1 : 0;
-          await updateDoc(userRef, { talentScore: newScore });
-        }
-        await deleteDoc(doc(db, "posts", postId));
-        setPosts((prev) => prev.filter((p) => p.id !== postId));
-      } catch (err: any) {
-        alert("삭제 중 오류 발생: " + err.message);
+    if (!confirm("해당 게시글을 삭제하고, 해당 회원의 달란트 점수를 1점 차감하시겠습니까?")) return;
+    try {
+      // 현재 로그인한 사용자가 관리자임을 재확인
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert("로그인이 필요합니다.");
+        return;
       }
+      const adminSnap = await getDoc(doc(db, "users", currentUser.uid));
+      if (!adminSnap.exists() || (adminSnap.data() as UserData).role !== "admin") {
+        alert("관리자 권한이 없습니다.");
+        return;
+      }
+      // 게시글 작성자의 달란트 점수 차감
+      const userRef = doc(db, "users", postUserId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data() as UserData;
+        const currentScore = userData.talentScore || 0;
+        const newScore = currentScore > 0 ? currentScore - 1 : 0;
+        await updateDoc(userRef, { talentScore: newScore });
+      }
+      // 게시글 삭제
+      await deleteDoc(doc(db, "posts", postId));
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (err: any) {
+      alert("삭제 중 오류 발생: " + err.message);
     }
   };
 

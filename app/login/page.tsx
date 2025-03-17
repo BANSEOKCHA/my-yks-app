@@ -62,7 +62,7 @@ export default function LoginPage() {
             로그인
           </button>
         </form>
-        <div className="mt-4 text-center">
+        <div className="flex items-start justify-center min-h-screen p-4 pt-10">
           <button
             onClick={() => router.push("/signup")}
             className="text-green-600 hover:text-green-800 transition"
