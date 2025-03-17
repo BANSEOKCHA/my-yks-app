@@ -1,0 +1,13 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 추가 글로벌 스타일 */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc;
+  color: #1f2937;
+  font-family: sans-serif;
+}
