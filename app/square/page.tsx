@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "../firebaseConfig";
+import { useRouter } from "next/navigation";
+import { db, auth } from "../firebaseConfig";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 interface PostData {
   id: string;
@@ -20,6 +22,7 @@ interface UserData {
 }
 
 export default function SquarePage() {
+  const router = useRouter();
   const [posts, setPosts] = useState<PostData[]>([]);
   const [usersMap, setUsersMap] = useState<{ [key: string]: { name: string; cell: string } }>({});
   const [error, setError] = useState<string | null>(null);
@@ -76,9 +79,17 @@ export default function SquarePage() {
   };
 
   useEffect(() => {
-    fetchPublicPosts();
-    fetchUsers();
-  }, []);
+    // 로그인 체크: 인증된 사용자만 광장 페이지를 볼 수 있도록 함
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push("/login");
+      } else {
+        fetchPublicPosts();
+        fetchUsers();
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
