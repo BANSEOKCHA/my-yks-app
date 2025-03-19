@@ -16,10 +16,6 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import dynamic from "next/dynamic";
-
-// QRScanner 컴포넌트는 사용하지 않으므로 주석 처리 (필요시 사용)
-// const QRScanner = dynamic(() => import("../components/QRScanner"), { ssr: false });
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -69,7 +65,7 @@ export default function DashboardPage() {
     }
     setIsSubmitting(true);
     try {
-      // 게시글 등록
+      // 1. 게시글 등록
       await addDoc(collection(db, "posts"), {
         userId: user.uid,
         missionType,
@@ -78,35 +74,26 @@ export default function DashboardPage() {
         createdAt: serverTimestamp(),
       });
       setContent("");
-      fetchMyPosts(user.uid);
+      await fetchMyPosts(user.uid);
 
-      // 달란트 점수 업데이트 및 scoreHistory 기록 추가 (하루 1회만)
+      // 2. 달란트 점수 업데이트 및 scoreHistory 기록 추가 (제한 없이 매번 추가)
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        const lastPostDate = userData.lastPostDate
-          ? new Date(userData.lastPostDate.seconds * 1000)
-          : null;
-        const today = new Date();
-        const isSameDay =
-          lastPostDate &&
-          lastPostDate.getFullYear() === today.getFullYear() &&
-          lastPostDate.getMonth() === today.getMonth() &&
-          lastPostDate.getDate() === today.getDate();
-        if (!isSameDay) {
-          const newScore = (userData.talentScore || 0) + 1;
-          await updateDoc(userRef, {
-            talentScore: newScore,
-            lastPostDate: serverTimestamp(),
-          });
-          // scoreHistory 하위 컬렉션에 기록 추가
-          await addDoc(collection(db, "users", user.uid, "scoreHistory"), {
-            score: 1,
-            missionContent: missionType,
-            createdAt: serverTimestamp(),
-          });
-        }
+        const newScore = (userData.talentScore || 0) + 1;
+        await updateDoc(userRef, {
+          talentScore: newScore,
+          lastPostDate: serverTimestamp(),
+        });
+        // scoreHistory 하위 컬렉션에 기록 추가
+        await addDoc(collection(db, "users", user.uid, "scoreHistory"), {
+          score: 1,
+          missionContent: missionType,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        alert("사용자 정보를 불러올 수 없습니다.");
       }
       alert("등록 되었습니다");
     } catch (err: any) {

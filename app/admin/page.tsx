@@ -106,21 +106,11 @@ export default function AdminPage() {
     }
   };
 
-  // 관리자 삭제: 관리자가 다른 유저의 게시글을 삭제할 때 관리자 권한을 재확인한 후 진행
+  // 관리자 삭제: 관리자 계정은 Firestore 보안 규칙에 의해 삭제 권한이 있으므로,
+  // 별도의 관리자 재확인 없이 바로 진행하도록 수정.
   const handleDeletePost = async (postId: string, postUserId: string) => {
     if (!confirm("해당 게시글을 삭제하고, 해당 회원의 달란트 점수를 1점 차감하시겠습니까?")) return;
     try {
-      // 현재 로그인한 사용자가 관리자임을 재확인
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        alert("로그인이 필요합니다.");
-        return;
-      }
-      const adminSnap = await getDoc(doc(db, "users", currentUser.uid));
-      if (!adminSnap.exists() || (adminSnap.data() as UserData).role !== "admin") {
-        alert("관리자 권한이 없습니다.");
-        return;
-      }
       // 게시글 작성자의 달란트 점수 차감
       const userRef = doc(db, "users", postUserId);
       const userSnap = await getDoc(userRef);
@@ -210,8 +200,9 @@ export default function AdminPage() {
       </div>
     );
 
+  // activeUsers: 탈퇴되지 않은 회원만 표시 (탈퇴회원은 목록에서 완전히 제외)
   const activeUsers = users.filter((u) => !u.disabled);
-  const disabledUsers = users.filter((u) => u.disabled);
+
   const topRankings = [...activeUsers]
     .sort((a, b) => (b.talentScore || 0) - (a.talentScore || 0))
     .slice(0, 5);
@@ -249,12 +240,7 @@ export default function AdminPage() {
           >
             전체 등록회원 목록 보기
           </button>
-          <button
-            onClick={handleViewDisabledUsers}
-            className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
-          >
-            전체 탈퇴회원 목록 보기
-          </button>
+          {/* 탈퇴회원 목록 버튼은 제거 */}
         </div>
       </section>
 
@@ -337,33 +323,6 @@ export default function AdminPage() {
             </li>
           ))}
         </ul>
-        <div className="mt-4">
-          <p className="text-sm text-gray-600">탈퇴회원은 아래에 표시됩니다.</p>
-          <ul className="space-y-2 mt-2">
-            {disabledUsers.length === 0 ? (
-              <p className="text-gray-500">탈퇴한 회원이 없습니다.</p>
-            ) : (
-              disabledUsers.map((u) => (
-                <li
-                  key={u.id}
-                  className="p-2 bg-gray-100 rounded shadow flex justify-between items-center"
-                >
-                  <div>
-                    <div>UID: {u.uid}</div>
-                    <div>Email: {u.email}</div>
-                    <div>Name: {u.name}</div>
-                  </div>
-                  <button
-                    onClick={() => handleAddScore(u.uid)}
-                    className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
-                  >
-                    점수 추가
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
       </section>
 
       {/* 게시글 목록 */}
@@ -376,7 +335,10 @@ export default function AdminPage() {
               className="p-2 bg-white rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center"
             >
               <div className="mb-2 sm:mb-0">
-                <div>작성자: {p.userId}</div>
+                <div>
+                  작성자: {p.userId} (
+                  {users.find((u) => u.uid === p.userId)?.name || "알 수 없음"})
+                </div>
                 <div>내용: {p.content}</div>
                 <div>공개여부: {p.isPublic ? "공개" : "비공개"}</div>
                 <div>

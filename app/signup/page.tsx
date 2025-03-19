@@ -16,10 +16,11 @@ export default function SignupPage() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const adminEmail = "amorfortunae@naver.com";
 
-  // 소속 셀 옵션 (장년교사, 청년교사, 1-1셀 ~ 1-8셀, 2-1셀 ~ 2-7셀, 3-1셀 ~ 3-8셀)
+  // 소속 셀 옵션 (전도사, 장년교사, 청년교사, 1-1셀 ~ 1-8셀, 2-1셀 ~ 2-7셀, 3-1셀 ~ 3-8셀)
   const cellOptions = [
     "전도사",
     "장년교사",
@@ -31,6 +32,10 @@ export default function SignupPage() {
 
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) {
+      alert("이미 가입 처리가 진행 중입니다.");
+      return;
+    }
     setError(null);
     if (pw !== pwConfirm) {
       setError("비밀번호가 일치하지 않습니다.");
@@ -40,7 +45,7 @@ export default function SignupPage() {
       setError("비밀번호는 숫자 6자리여야 합니다.");
       return;
     }
-
+    setIsSubmitting(true);
     try {
       const userCred = await createUserWithEmailAndPassword(auth, email, pw);
       const user = userCred.user;
@@ -57,12 +62,15 @@ export default function SignupPage() {
       });
 
       setSuccess(true);
+      alert("가입되었습니다.");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         setError("이미 가입된 회원정보 입니다.");
       } else {
         setError(err.message);
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -146,7 +154,10 @@ export default function SignupPage() {
           />
           <button
             type="submit"
-            className="w-full bg-green-500 text-white font-semibold py-3 rounded hover:bg-green-600 transition"
+            disabled={isSubmitting}
+            className={`w-full bg-green-500 text-white font-semibold py-3 rounded transition ${
+              isSubmitting ? "bg-gray-400 cursor-not-allowed" : "hover:bg-green-600"
+            }`}
           >
             회원가입
           </button>
