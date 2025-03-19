@@ -76,26 +76,45 @@ export default function DashboardPage() {
       setContent("");
       await fetchMyPosts(user.uid);
 
-      // 2. 달란트 점수 업데이트 및 scoreHistory 기록 추가 (제한 없이 매번 추가)
+      // 2. 달란트 점수 업데이트 (하루에 1점만 추가)
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        const newScore = (userData.talentScore || 0) + 1;
-        await updateDoc(userRef, {
-          talentScore: newScore,
-          lastPostDate: serverTimestamp(),
-        });
-        // scoreHistory 하위 컬렉션에 기록 추가
-        await addDoc(collection(db, "users", user.uid, "scoreHistory"), {
-          score: 1,
-          missionContent: missionType,
-          createdAt: serverTimestamp(),
-        });
+        let shouldUpdate = false;
+        if (userData.lastPostDate) {
+          const lastPostDate = new Date(userData.lastPostDate.seconds * 1000);
+          const today = new Date();
+          const isSameDay =
+            lastPostDate.getFullYear() === today.getFullYear() &&
+            lastPostDate.getMonth() === today.getMonth() &&
+            lastPostDate.getDate() === today.getDate();
+          if (!isSameDay) {
+            shouldUpdate = true;
+          }
+        } else {
+          // 기록이 없는 경우 바로 업데이트
+          shouldUpdate = true;
+        }
+        if (shouldUpdate) {
+          const newScore = (userData.talentScore || 0) + 1;
+          await updateDoc(userRef, {
+            talentScore: newScore,
+            lastPostDate: serverTimestamp(),
+          });
+          // scoreHistory 하위 컬렉션에 기록 추가
+          await addDoc(collection(db, "users", user.uid, "scoreHistory"), {
+            score: 1,
+            missionContent: missionType,
+            createdAt: serverTimestamp(),
+          });
+          alert("등록 되었습니다. 달란트 점수가 추가되었습니다.");
+        } else {
+          alert("함께해줘서 고맙고 감사해요!");
+        }
       } else {
         alert("사용자 정보를 불러올 수 없습니다.");
       }
-      alert("등록 되었습니다");
     } catch (err: any) {
       setError(err.message);
     } finally {
