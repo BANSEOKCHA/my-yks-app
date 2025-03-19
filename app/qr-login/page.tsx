@@ -30,7 +30,7 @@ export default function QRLoginPage() {
       return;
     }
 
-    // 로그인 상태 확인: 사용자가 로그인 되어있지 않으면 로그인 페이지로 리다이렉트
+    // 로그인 상태 확인: 사용자가 로그인되어 있지 않으면 로그인 페이지로 리다이렉트
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         router.push("/login?redirect=/qr-login?code=" + expectedCode);
@@ -40,36 +40,21 @@ export default function QRLoginPage() {
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             const userData = userSnap.data();
-            // 오늘 이미 출석 등록되었는지 확인 (lastQRDate 필드 사용)
-            let canAward = true;
-            if (userData.lastQRDate) {
-              const lastQRDate = new Date(userData.lastQRDate.seconds * 1000);
-              const today = new Date();
-              const isSameDay =
-                lastQRDate.getFullYear() === today.getFullYear() &&
-                lastQRDate.getMonth() === today.getMonth() &&
-                lastQRDate.getDate() === today.getDate();
-              if (isSameDay) {
-                canAward = false;
-              }
-            }
-            if (canAward) {
-              // 달란트 점수 5점 추가 및 출석 기록
-              const newScore = (userData.talentScore || 0) + 5;
-              await updateDoc(userRef, {
-                talentScore: newScore,
-                lastQRDate: serverTimestamp(),
-              });
-              // scoreHistory 하위 컬렉션에 기록 추가
-              await addDoc(collection(db, "users", currentUser.uid, "scoreHistory"), {
-                score: 5,
-                missionContent: "QR 코드 출석 인증",
-                createdAt: serverTimestamp(),
-              });
-              setMessage("출석 인증되었습니다! 달란트 점수가 5점 추가되었습니다.");
-            } else {
-              setMessage("이미 출석이 등록되었습니다.");
-            }
+            // 조건 없이 항상 출석 인증 처리 (달란트 5점 추가)
+            const newScore = (userData.talentScore || 0) + 5;
+            await updateDoc(userRef, {
+              talentScore: newScore,
+              lastQRDate: serverTimestamp(),
+            });
+            // scoreHistory 하위 컬렉션에 기록 추가
+            await addDoc(collection(db, "users", currentUser.uid, "scoreHistory"), {
+              score: 5,
+              missionContent: "QR 코드 출석 인증",
+              createdAt: serverTimestamp(),
+            });
+            setMessage("출석 인증되었습니다! 달란트 점수가 5점 추가되었습니다.");
+          } else {
+            setMessage("사용자 정보를 불러올 수 없습니다.");
           }
         } catch (err: any) {
           setMessage("오류가 발생했습니다: " + err.message);
