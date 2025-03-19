@@ -19,7 +19,7 @@ export default function QRLoginPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>("");
 
-  // 코드가 URL에 포함되어 있는지 확인 (예: ?code=YOUR_SECRET_CODE)
+  // URL에 포함된 code 파라미터 확인 (예: ?code=YOUR_SECRET_CODE)
   const codeFromUrl = searchParams.get("code");
   const expectedCode = process.env.NEXT_PUBLIC_QR_SECRET || "YOUR_SECRET_CODE";
 
@@ -33,7 +33,6 @@ export default function QRLoginPage() {
     // 로그인 상태 확인: 사용자가 로그인 되어있지 않으면 로그인 페이지로 리다이렉트
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        // 로그인되지 않은 경우, 로그인 페이지로 이동
         router.push("/login?redirect=/qr-login?code=" + expectedCode);
       } else {
         try {
@@ -41,7 +40,7 @@ export default function QRLoginPage() {
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             const userData = userSnap.data();
-            // 이미 오늘 출석이 등록되었는지 확인 (lastQRDate 필드 사용)
+            // 오늘 이미 출석 등록되었는지 확인 (lastQRDate 필드 사용)
             let canAward = true;
             if (userData.lastQRDate) {
               const lastQRDate = new Date(userData.lastQRDate.seconds * 1000);
@@ -54,7 +53,7 @@ export default function QRLoginPage() {
                 canAward = false;
               }
             }
-            if (todayIsSunday() && canAward) {
+            if (canAward) {
               // 달란트 점수 5점 추가 및 출석 기록
               const newScore = (userData.talentScore || 0) + 5;
               await updateDoc(userRef, {
@@ -81,12 +80,6 @@ export default function QRLoginPage() {
 
     return () => unsub();
   }, [router, codeFromUrl, expectedCode]);
-
-  // 오늘이 일요일인지 확인하는 함수 (0: 일요일)
-  const todayIsSunday = () => {
-    const now = new Date();
-    return now.getDay() === 0;
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
