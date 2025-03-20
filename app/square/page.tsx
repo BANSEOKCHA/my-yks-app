@@ -42,18 +42,19 @@ export default function SquarePage() {
         ...doc.data(),
       })) as PostData[];
 
-      // 오늘 요일 필터링: 오늘의 요일에 등록된 게시글만 표시
-      const today = new Date().getDay();
-      data = data.filter(post => {
-        if (!post.createdAt || !post.createdAt.seconds) return false;
-        const postDate = new Date(post.createdAt.seconds * 1000);
-        return postDate.getDay() === today;
-      });
+      // 현재 시각을 기준으로 24시간 이내에 등록된 게시글만 필터링
+const now = new Date();
+data = data.filter(post => {
+  if (!post.createdAt || !post.createdAt.seconds) return false;
+  const postDate = new Date(post.createdAt.seconds * 1000);
+  const diffHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
+  return diffHours <= 24;
+});
 
-      // 무작위 정렬
-      data = data.sort(() => Math.random() - 0.5);
 
-      setPosts(data);
+    // 쿼리에서 orderBy로 이미 정렬된 순서대로 사용
+
+     setPosts(data);
     } catch (err: any) {
       setError(err.message);
     }
