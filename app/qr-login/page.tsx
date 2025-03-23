@@ -55,7 +55,7 @@ export default function QRLoginPage() {
           return;
         }
 
-        // 2. 시간 체크 (06:00:00 ~ 10:54:59)
+        // 2. 시간 체크 (06:00:00 ~ 08:54:59)
         const hour = now.getHours();
         const minute = now.getMinutes();
         const second = now.getSeconds();
@@ -63,11 +63,11 @@ export default function QRLoginPage() {
         const startTime = 6 * 3600;
         const endTime = 8 * 3600 + 54 * 60 + 59;
 
-        // if (currentTime < startTime || currentTime > endTime) {
-        //   setMessage("출석 인증은 일요일 오전 6시부터 8시 54분까지 가능합니다.");
-        //   setLoading(false);
-        //   return;
-        // }
+        if (currentTime < startTime || currentTime > endTime) {
+           setMessage("출석 인증은 일요일 오전 6시부터 8시 54분까지 가능합니다.");
+           setLoading(false);
+           return;
+         }
 
         // 3. 하루 한 번만 가능 (lastQRDate로 검사)
         let canAward = true;
