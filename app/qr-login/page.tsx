@@ -57,7 +57,7 @@ export default function QRLoginPage() {
           return;
         }
 
-        // 🔧 시간 제한 검사 (06:00:00 ~ 08:54:59)
+        // 🔧 시간 제한 검사 (06:00:00 ~ 10:54:59)
         const hour = now.getHours();
         const minute = now.getMinutes();
         const second = now.getSeconds();
@@ -72,18 +72,18 @@ export default function QRLoginPage() {
         }
 
         // 🔧 하루 1회 제한 검사
-        let canAward = true;
-        if (userData.lastQRDate) {
-          const lastQRDate = new Date(userData.lastQRDate.seconds * 1000);
-          const isSameDay =
-            lastQRDate.getFullYear() === now.getFullYear() &&
-            lastQRDate.getMonth() === now.getMonth() &&
-            lastQRDate.getDate() === now.getDate();
+        //let canAward = true;
+        //if (userData.lastQRDate) {
+         // const lastQRDate = new Date(userData.lastQRDate.seconds * 1000);
+          //const isSameDay =
+            //lastQRDate.getFullYear() === now.getFullYear() &&
+            //lastQRDate.getMonth() === now.getMonth() &&
+            //lastQRDate.getDate() === now.getDate();
 
-          if (isSameDay) {
-            canAward = false;
-          }
-        }
+          //if (isSameDay) {
+            //canAward = false;
+          //}
+        //}
 
         if (!canAward) {
           setMessage("이미 오늘 출석이 등록되었습니다.");
