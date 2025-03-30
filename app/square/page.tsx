@@ -107,7 +107,7 @@ export default function SquarePage() {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">📣 광장</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center"> 광장</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {/* 검색창 */}
