@@ -107,7 +107,7 @@ export default function SquarePage() {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center"> 광장</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">광장</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {/* 검색창 */}
@@ -139,19 +139,30 @@ export default function SquarePage() {
               ? `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, "0")}-${String(createdDate.getDate()).padStart(2, "0")}`
               : "";
 
+            const contentLines = post.content?.split("\n").filter(line => line.trim() !== "");
+
             return (
               <div
                 key={post.id}
                 className="bg-white p-4 rounded-2xl shadow flex flex-col space-y-2"
               >
-                <p className="text-sm leading-relaxed break-words">{post.content}</p>
+                {/* 게시글 내용: 리스트 형식 */}
+                {contentLines?.length > 0 && (
+                  <ol className="list-decimal list-inside text-sm leading-relaxed break-words space-y-1">
+                    {contentLines.map((line, index) => (
+                      <li key={index}>{line}</li>
+                    ))}
+                  </ol>
+                )}
+
+                {/* 작성자 및 날짜 */}
                 <div className="flex justify-between items-center text-xs text-gray-600">
+                  <span>{formattedDate}</span>
                   <span>
                     {usersMap[post.userId]?.name || "알 수 없음"},{" "}
-                    {usersMap[post.userId]?.cell || "알 수 없음"},{" "}
+                    {usersMap[post.userId]?.cell || "미정"},{" "}
                     {post.missionType || "미정"}
                   </span>
-                  <span>{formattedDate}</span>
                 </div>
               </div>
             );
