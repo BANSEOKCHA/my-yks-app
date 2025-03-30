@@ -20,6 +20,7 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [missionType, setMissionType] = useState("감사나눔");
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -28,14 +29,16 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        router.push("/");
-      } else {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
         setUser(currentUser);
-        fetchMyPosts(currentUser.uid);
+        await fetchMyPosts(currentUser.uid);
+      } else {
+        router.replace("/login?redirect=/dashboard");
       }
+      setLoading(false);
     });
+
     return () => unsub();
   }, [router]);
 
@@ -57,15 +60,13 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    if (!user) return;
+    if (isSubmitting || !user) return;
     if (content.trim().length < 15) {
       alert("글 내용은 최소 15자 이상 입력되어야 합니다.");
       return;
     }
     setIsSubmitting(true);
     try {
-      // 1. 게시글 등록
       await addDoc(collection(db, "posts"), {
         userId: user.uid,
         missionType,
@@ -76,7 +77,6 @@ export default function DashboardPage() {
       setContent("");
       await fetchMyPosts(user.uid);
 
-      // 2. 달란트 점수 업데이트 (하루에 1점만 추가)
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
@@ -93,7 +93,6 @@ export default function DashboardPage() {
             shouldUpdate = true;
           }
         } else {
-          // 기록이 없는 경우 바로 업데이트
           shouldUpdate = true;
         }
         if (shouldUpdate) {
@@ -102,7 +101,6 @@ export default function DashboardPage() {
             talentScore: newScore,
             lastPostDate: serverTimestamp(),
           });
-          // scoreHistory 하위 컬렉션에 기록 추가
           await addDoc(collection(db, "users", user.uid, "scoreHistory"), {
             score: 1,
             missionContent: missionType,
@@ -136,6 +134,10 @@ export default function DashboardPage() {
       alert("글 내용은 최소 15자 이상이어야 합니다.");
     }
   };
+
+  if (loading) {
+    return <div className="p-6 text-center">로딩 중...</div>;
+  }
 
   return (
     <div className="min-h-screen p-4 flex flex-col items-center space-y-6">
