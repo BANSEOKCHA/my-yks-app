@@ -150,7 +150,7 @@ export default function DashboardPage() {
               className="border p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 sm:mt-0"
             >
               <option value="감사나눔">감사나눔</option>
-              <option value="중보기도">중보기도 나눔</option>
+              <option value="기도나눔">기도나눔</option>
             </select>
           </div>
           <textarea

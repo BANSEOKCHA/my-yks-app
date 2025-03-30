@@ -11,6 +11,7 @@ interface PostData {
   userId: string;
   content: string;
   isPublic: boolean;
+  missionType?: string; // ✅ 게시글 종류 추가
   createdAt?: any;
 }
 
@@ -52,7 +53,7 @@ export default function SquarePage() {
       });
 
       setPosts(data);
-      setFilteredPosts(data); // 초기 상태는 전체 표시
+      setFilteredPosts(data);
     } catch (err: any) {
       setError(err.message);
     }
@@ -134,7 +135,9 @@ export default function SquarePage() {
             <div key={post.id} className="bg-white p-4 rounded shadow">
               <p className="text-sm font-medium text-left">{post.content}</p>
               <small className="text-xs text-gray-600 text-left mt-1 block">
-                {usersMap[post.userId]?.name || "알 수 없음"}, {usersMap[post.userId]?.cell || "알 수 없음"}
+                {usersMap[post.userId]?.name || "알 수 없음"},{" "}
+                {usersMap[post.userId]?.cell || "알 수 없음"},{" "}
+                {post.missionType || "미정"}
               </small>
             </div>
           ))}
