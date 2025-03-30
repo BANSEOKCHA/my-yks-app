@@ -146,11 +146,13 @@ export default function SquarePage() {
                 key={post.id}
                 className="bg-white p-4 rounded-2xl shadow flex flex-col space-y-2"
               >
-                {/* 게시글 내용: 리스트 형식 */}
+                {/* 게시글 내용: 리스트 형식 (앞 숫자 제거) */}
                 {contentLines?.length > 0 && (
                   <ol className="list-decimal list-inside text-sm leading-relaxed break-words space-y-1">
                     {contentLines.map((line, index) => (
-                      <li key={index}>{line}</li>
+                      <li key={index}>
+                        {line.replace(/^\d+\.\s*/, "")}
+                      </li>
                     ))}
                   </ol>
                 )}
