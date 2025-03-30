@@ -105,7 +105,7 @@ export default function DashboardPage() {
             missionContent: missionType,
             createdAt: serverTimestamp(),
           });
-          alert("등록 되었습니다. 달란트 점수가 추가되었습니다.");
+          alert("등록되었습니다. 달란트 점수가 추가되었습니다.");
         } else {
           alert("함께해줘서 고맙고 감사해요!");
         }
@@ -139,33 +139,38 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 flex flex-col items-center space-y-6">
-      <div className="bg-white w-full max-w-md p-4 rounded shadow">
+    <div className="min-h-screen p-4 flex flex-col items-center space-y-6 bg-gray-50">
+      {/* 미션 입력 폼 */}
+      <div className="bg-white w-full max-w-md p-5 rounded-2xl shadow space-y-4">
+        <h2 className="text-xl font-bold text-center">오늘의 미션 인증</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex flex-col sm:flex-row items-center sm:space-x-2">
-            <label className="whitespace-nowrap">미션 종류:</label>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium">미션 종류</label>
             <select
               value={missionType}
               onChange={(e) => setMissionType(e.target.value)}
-              className="border p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 sm:mt-0"
+              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="감사나눔">감사나눔</option>
               <option value="기도나눔">기도나눔</option>
             </select>
           </div>
-          <textarea
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-            placeholder="글 내용을 입력하세요 (최소 15자)"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-          />
-          <div className="flex flex-col sm:flex-row items-center sm:space-x-2">
-            <label className="whitespace-nowrap">공개 여부:</label>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium">내용</label>
+            <textarea
+              className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+              placeholder="글 내용을 입력하세요 (최소 15자)"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium">공개 여부</label>
             <select
               value={isPublic ? "public" : "private"}
               onChange={(e) => setIsPublic(e.target.value === "public")}
-              className="border p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 sm:mt-0"
+              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="public">공개</option>
               <option value="private">비공개</option>
@@ -185,23 +190,25 @@ export default function DashboardPage() {
         </form>
       </div>
 
-      <div className="bg-white w-full max-w-md p-4 rounded shadow">
-        <h2 className="text-xl font-semibold mb-3">내가 쓴 글</h2>
+      {/* 내가 쓴 글 목록 */}
+      <div className="bg-white w-full max-w-md p-5 rounded-2xl shadow space-y-4">
+        <h2 className="text-xl font-bold">내가 쓴 글</h2>
         {myPosts.length === 0 ? (
-          <p className="text-gray-500">글이 없습니다.</p>
+          <p className="text-gray-500 text-sm text-center">아직 작성한 글이 없습니다.</p>
         ) : (
           <ul className="space-y-3">
             {myPosts.map((post) => (
               <li
                 key={post.id}
-                className="border p-3 rounded flex justify-between items-center"
+                className="border rounded p-3 flex flex-col gap-2 bg-gray-50"
               >
-                <span>
-                  [{post.missionType}] {post.content}
+                <span className="text-sm leading-relaxed">
+                  <strong className="text-blue-600">[{post.missionType}]</strong>{" "}
+                  {post.content}
                 </span>
                 <button
                   onClick={() => handleEditPost(post.id, post.content)}
-                  className="ml-4 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
+                  className="self-end px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-xs"
                 >
                   수정
                 </button>
