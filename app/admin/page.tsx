@@ -214,7 +214,7 @@ export default function AdminPage() {
 
       {/* 상단 등록회원 순위 */}
       <section>
-        <h2 className="text-xl font-semibold mb-2">등록회원 순위 (상위 5명)</h2>
+        <h2 className="text-xl font-semibold mb-2">달란트 순위 (상위 5명)</h2>
         <ul className="space-y-2">
           {topRankings.map((u, index) => (
             <li
@@ -238,7 +238,7 @@ export default function AdminPage() {
             onClick={handleViewActiveUsers}
             className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
           >
-            전체 등록회원 목록 보기
+            전체 달란트 순위 보기
           </button>
           {/* 탈퇴회원 목록 버튼은 제거 */}
         </div>

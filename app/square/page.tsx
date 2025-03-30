@@ -26,8 +26,9 @@ export default function SquarePage() {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [usersMap, setUsersMap] = useState<{ [key: string]: { name: string; cell: string } }>({});
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filteredPosts, setFilteredPosts] = useState<PostData[]>([]);
 
-  // 게시글 불러오기 및 오늘 요일 필터 적용, 무작위 정렬
   const fetchPublicPosts = async () => {
     try {
       const postsRef = collection(db, "posts");
@@ -42,25 +43,21 @@ export default function SquarePage() {
         ...doc.data(),
       })) as PostData[];
 
-      // 현재 시각을 기준으로 24시간 이내에 등록된 게시글만 필터링
-const now = new Date();
-data = data.filter(post => {
-  if (!post.createdAt || !post.createdAt.seconds) return false;
-  const postDate = new Date(post.createdAt.seconds * 1000);
-  const diffHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
-  return diffHours <= 24;
-});
+      const now = new Date();
+      data = data.filter(post => {
+        if (!post.createdAt || !post.createdAt.seconds) return false;
+        const postDate = new Date(post.createdAt.seconds * 1000);
+        const diffHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
+        return diffHours <= 24;
+      });
 
-
-    // 쿼리에서 orderBy로 이미 정렬된 순서대로 사용
-
-     setPosts(data);
+      setPosts(data);
+      setFilteredPosts(data); // 초기 상태는 전체 표시
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // 사용자 데이터 불러오기
   const fetchUsers = async () => {
     try {
       const usersRef = collection(db, "users");
@@ -79,8 +76,23 @@ data = data.filter(post => {
     }
   };
 
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      setFilteredPosts(posts);
+      return;
+    }
+    const lowerTerm = searchTerm.toLowerCase();
+    const filtered = posts.filter(post => {
+      const userInfo = usersMap[post.userId];
+      return (
+        userInfo?.name?.toLowerCase().includes(lowerTerm) ||
+        userInfo?.cell?.toLowerCase().includes(lowerTerm)
+      );
+    });
+    setFilteredPosts(filtered);
+  };
+
   useEffect(() => {
-    // 로그인 체크: 인증된 사용자만 광장 페이지를 볼 수 있도록 함
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push("/login");
@@ -96,11 +108,29 @@ data = data.filter(post => {
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-center">광장</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
-      {posts.length === 0 ? (
-        <p className="text-gray-500 text-center">오늘 등록된 게시글이 없습니다.</p>
+
+      {/* 🔍 검색창 */}
+      <div className="mb-4 flex items-center space-x-2">
+        <input
+          type="text"
+          placeholder="이름 또는 소속으로 검색"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 p-2 border rounded"
+        />
+        <button
+          onClick={handleSearch}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+        >
+          검색
+        </button>
+      </div>
+
+      {filteredPosts.length === 0 ? (
+        <p className="text-gray-500 text-center">해당 조건에 맞는 게시글이 없습니다.</p>
       ) : (
         <div className="flex flex-col space-y-4">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <div key={post.id} className="bg-white p-4 rounded shadow">
               <p className="text-sm font-medium text-left">{post.content}</p>
               <small className="text-xs text-gray-600 text-left mt-1 block">

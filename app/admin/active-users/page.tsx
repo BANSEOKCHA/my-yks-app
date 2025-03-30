@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../../firebaseConfig";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 interface UserData {
   id: string;
@@ -17,6 +17,16 @@ interface UserData {
   disabled?: boolean;
 }
 
+// ✅ 소속 정렬 기준 배열 정의
+const customCellOrder = [
+  "전도사",
+  ...Array.from({ length: 8 }, (_, i) => `1-${i + 1}셀`),
+  ...Array.from({ length: 7 }, (_, i) => `2-${i + 1}셀`),
+  ...Array.from({ length: 8 }, (_, i) => `3-${i + 1}셀`),
+  "장년교사",
+  "청년교사",
+];
+
 export default function ActiveUsersPage() {
   const router = useRouter();
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
@@ -26,13 +36,22 @@ export default function ActiveUsersPage() {
   const fetchActiveUsers = async () => {
     try {
       const usersRef = collection(db, "users");
-      // active회원: disabled 필드가 false 또는 없음을 가정
-      const q = query(usersRef, where("disabled", "==", false), orderBy("name", "asc"));
+      const q = query(usersRef, orderBy("name", "asc")); // 정렬은 JS에서 처리할 것이므로 Firestore 정렬은 무시
       const snapshot = await getDocs(q);
-      const data: UserData[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() as UserData),
-      }));
+      let data: UserData[] = snapshot.docs
+        .map(doc => ({ id: doc.id, ...(doc.data() as UserData) }))
+        .filter(user => !user.disabled);
+
+      // ✅ 소속 기준 정렬 적용
+      data.sort((a, b) => {
+        const indexA = customCellOrder.indexOf(a.cell || "");
+        const indexB = customCellOrder.indexOf(b.cell || "");
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+
       setActiveUsers(data);
     } catch (err: any) {
       setError(err.message);
@@ -59,7 +78,7 @@ export default function ActiveUsersPage() {
             <tr className="border-b">
               <th className="text-left p-2">순위</th>
               <th className="text-left p-2">이름</th>
-              <th className="text-left p-2">이메일</th>
+              <th className="text-left p-2">소속</th>
               <th className="text-left p-2">달란트 점수</th>
             </tr>
           </thead>
@@ -68,7 +87,7 @@ export default function ActiveUsersPage() {
               <tr key={user.id} className="border-b">
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">{user.name}</td>
-                <td className="p-2">{user.email}</td>
+                <td className="p-2">{user.cell}</td>
                 <td className="p-2">{user.talentScore ?? 0}</td>
               </tr>
             ))}
@@ -76,10 +95,10 @@ export default function ActiveUsersPage() {
         </table>
       )}
       <button
-        onClick={() => router.back()}
+        onClick={() => router.push("/admin")}
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
       >
-        뒤로가기
+        관리자 페이지로 돌아가기
       </button>
     </div>
   );
