@@ -12,7 +12,6 @@ import {
   orderBy,
   updateDoc,
   deleteDoc,
-  where,
   serverTimestamp,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -39,13 +38,13 @@ interface PostData {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<UserData[]>([]);
   const [posts, setPosts] = useState<PostData[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserData[]>([]);
 
   useEffect(() => {
@@ -106,12 +105,9 @@ export default function AdminPage() {
     }
   };
 
-  // 관리자 삭제: 관리자 계정은 Firestore 보안 규칙에 의해 삭제 권한이 있으므로,
-  // 별도의 관리자 재확인 없이 바로 진행하도록 수정.
   const handleDeletePost = async (postId: string, postUserId: string) => {
     if (!confirm("해당 게시글을 삭제하고, 해당 회원의 달란트 점수를 1점 차감하시겠습니까?")) return;
     try {
-      // 게시글 작성자의 달란트 점수 차감
       const userRef = doc(db, "users", postUserId);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
@@ -120,7 +116,6 @@ export default function AdminPage() {
         const newScore = currentScore > 0 ? currentScore - 1 : 0;
         await updateDoc(userRef, { talentScore: newScore });
       }
-      // 게시글 삭제
       await deleteDoc(doc(db, "posts", postId));
       setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch (err: any) {
@@ -129,11 +124,7 @@ export default function AdminPage() {
   };
 
   const handleRemoveUser = async (userId: string, uid: string) => {
-    if (
-      confirm(
-        "해당 회원을 탈퇴시키겠습니까? (탈퇴 후 해당 아이디로는 로그인할 수 없습니다.)"
-      )
-    ) {
+    if (confirm("해당 회원을 탈퇴시키겠습니까?")) {
       try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { disabled: true });
@@ -188,21 +179,10 @@ export default function AdminPage() {
     window.open("/admin/active-users", "_blank");
   };
 
-  const handleViewDisabledUsers = () => {
-    window.open("/admin/disabled-users", "_blank");
-  };
-
   if (loading) return <div className="p-6">로딩 중...</div>;
-  if (!isAdmin)
-    return (
-      <div className="p-6">
-        <p>관리자 권한이 없습니다.</p>
-      </div>
-    );
+  if (!isAdmin) return <div className="p-6"><p>관리자 권한이 없습니다.</p></div>;
 
-  // activeUsers: 탈퇴되지 않은 회원만 표시 (탈퇴회원은 목록에서 완전히 제외)
   const activeUsers = users.filter((u) => !u.disabled);
-
   const topRankings = [...activeUsers]
     .sort((a, b) => (b.talentScore || 0) - (a.talentScore || 0))
     .slice(0, 5);
@@ -221,9 +201,7 @@ export default function AdminPage() {
               key={u.id}
               className="p-2 bg-gray-100 rounded shadow flex justify-between items-center"
             >
-              <span>
-                {index + 1}. {u.name} ({u.talentScore || 0}점)
-              </span>
+              <span>{index + 1}. {u.name} ({u.talentScore || 0}점)</span>
               <button
                 onClick={() => handleAddScore(u.uid)}
                 className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
@@ -240,11 +218,10 @@ export default function AdminPage() {
           >
             전체 달란트 순위 보기
           </button>
-          {/* 탈퇴회원 목록 버튼은 제거 */}
         </div>
       </section>
 
-      {/* 회원 검색 및 관리 */}
+      {/* 회원 검색 */}
       <section>
         <h2 className="text-xl font-semibold mb-2">회원 검색</h2>
         <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -269,60 +246,33 @@ export default function AdminPage() {
               {searchResults.map((u) => (
                 <li
                   key={u.id}
-                  className="flex justify-between items-center p-2 bg-gray-100 rounded shadow"
+                  className="p-2 bg-gray-100 rounded shadow"
                 >
-                  <div>
-                    <div>UID: {u.uid}</div>
-                    <div>Name: {u.name}</div>
-                    <div>Email: {u.email}</div>
+                  <div className="space-y-1">
+                    <div>이름: {u.name}</div>
+                    <div>소속 셀: {u.cell || "미정"}</div>
+                    <div>핸드폰: {u.phone || "미입력"}</div>
+                    <div>달란트 점수: {u.talentScore ?? 0}</div>
                   </div>
-                  <button
-                    onClick={() => handleAddScore(u.uid)}
-                    className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
-                  >
-                    점수 추가
-                  </button>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleAddScore(u.uid)}
+                      className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
+                    >
+                      점수 추가
+                    </button>
+                    <button
+                      onClick={() => handleRemoveUser(u.id, u.uid)}
+                      className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
+                    >
+                      회원 탈퇴
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
         )}
-      </section>
-
-      {/* 회원 목록 */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">등록회원 목록</h2>
-        <ul className="space-y-2">
-          {activeUsers.map((u) => (
-            <li
-              key={u.id}
-              className="p-2 bg-gray-100 rounded shadow flex justify-between items-center"
-            >
-              <div>
-                <div>UID: {u.uid}</div>
-                <div>Email: {u.email}</div>
-                <div>Name: {u.name}</div>
-                <div>셀: {u.cell}</div>
-                <div>Phone: {u.phone}</div>
-                <div>Role: {u.role}</div>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleAddScore(u.uid)}
-                  className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
-                >
-                  점수 추가
-                </button>
-                <button
-                  onClick={() => handleRemoveUser(u.id, u.uid)}
-                  className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition whitespace-nowrap"
-                >
-                  회원 탈퇴
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
       </section>
 
       {/* 게시글 목록 */}
