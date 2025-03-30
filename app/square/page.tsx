@@ -11,7 +11,7 @@ interface PostData {
   userId: string;
   content: string;
   isPublic: boolean;
-  missionType?: string; // ✅ 게시글 종류 추가
+  missionType?: string;
   createdAt?: any;
 }
 
@@ -106,22 +106,22 @@ export default function SquarePage() {
   }, [router]);
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">광장</h1>
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4 text-center">📣 광장</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
 
-      {/* 🔍 검색창 */}
-      <div className="mb-4 flex items-center space-x-2">
+      {/* 검색창 */}
+      <div className="mb-4 flex flex-col sm:flex-row items-center gap-2">
         <input
           type="text"
           placeholder="이름 또는 소속으로 검색"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <button
           onClick={handleSearch}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
           검색
         </button>
@@ -131,16 +131,31 @@ export default function SquarePage() {
         <p className="text-gray-500 text-center">해당 조건에 맞는 게시글이 없습니다.</p>
       ) : (
         <div className="flex flex-col space-y-4">
-          {filteredPosts.map((post) => (
-            <div key={post.id} className="bg-white p-4 rounded shadow">
-              <p className="text-sm font-medium text-left">{post.content}</p>
-              <small className="text-xs text-gray-600 text-left mt-1 block">
-                {usersMap[post.userId]?.name || "알 수 없음"},{" "}
-                {usersMap[post.userId]?.cell || "알 수 없음"},{" "}
-                {post.missionType || "미정"}
-              </small>
-            </div>
-          ))}
+          {filteredPosts.map((post) => {
+            const createdDate = post.createdAt?.seconds
+              ? new Date(post.createdAt.seconds * 1000)
+              : null;
+            const formattedDate = createdDate
+              ? `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, "0")}-${String(createdDate.getDate()).padStart(2, "0")}`
+              : "";
+
+            return (
+              <div
+                key={post.id}
+                className="bg-white p-4 rounded-2xl shadow flex flex-col space-y-2"
+              >
+                <p className="text-sm leading-relaxed break-words">{post.content}</p>
+                <div className="flex justify-between items-center text-xs text-gray-600">
+                  <span>
+                    {usersMap[post.userId]?.name || "알 수 없음"},{" "}
+                    {usersMap[post.userId]?.cell || "알 수 없음"},{" "}
+                    {post.missionType || "미정"}
+                  </span>
+                  <span>{formattedDate}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
