@@ -29,16 +29,15 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        await fetchMyPosts(currentUser.uid);
+        fetchMyPosts(currentUser.uid);
       } else {
-        router.replace("/login?redirect=/dashboard");
+        router.push("/login?redirect=/dashboard");
       }
       setLoading(false);
     });
-
     return () => unsub();
   }, [router]);
 
@@ -185,6 +184,7 @@ export default function DashboardPage() {
           </button>
         </form>
       </div>
+
       <div className="bg-white w-full max-w-md p-4 rounded shadow">
         <h2 className="text-xl font-semibold mb-3">내가 쓴 글</h2>
         {myPosts.length === 0 ? (

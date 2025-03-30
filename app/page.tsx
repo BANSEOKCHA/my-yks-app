@@ -1,18 +1,29 @@
 "use client";
 
-// (1) React, FormEvent 가져오기
-import React, { useState, FormEvent } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "./firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // (2) handleLogin에 FormEvent 사용
+  // 로그인 상태면 자동 이동
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.replace("/dashboard");
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsub();
+  }, [router]);
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     try {
@@ -22,6 +33,14 @@ export default function LoginPage() {
       setError("등록되지 않은 회원입니다. 회원가입 후 로그인해주세요.");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>로그인 상태 확인 중...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
