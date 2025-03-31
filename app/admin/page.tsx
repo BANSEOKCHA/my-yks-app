@@ -183,7 +183,10 @@ export default function AdminPage() {
   if (!isAdmin) return <div className="p-6"><p>관리자 권한이 없습니다.</p></div>;
 
   const activeUsers = users.filter((u) => !u.disabled);
+
+  // ✅ 학생만 필터링해서 상위 5명 추출
   const topRankings = [...activeUsers]
+    .filter((u) => !["전도사", "장년교사", "청년교사"].includes(u.cell || ""))
     .sort((a, b) => (b.talentScore || 0) - (a.talentScore || 0))
     .slice(0, 5);
 
@@ -194,7 +197,7 @@ export default function AdminPage() {
 
       {/* 상단 등록회원 순위 */}
       <section>
-        <h2 className="text-xl font-semibold mb-2">달란트 순위 (상위 5명)</h2>
+        <h2 className="text-xl font-semibold mb-2">달란트 순위 (학생 상위 5명)</h2>
         <ul className="space-y-2">
           {topRankings.map((u, index) => (
             <li
@@ -216,7 +219,7 @@ export default function AdminPage() {
             onClick={handleViewActiveUsers}
             className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
           >
-            전체 달란트 순위 보기
+            전체 등록회원 달란트 현황 보기
           </button>
         </div>
       </section>
